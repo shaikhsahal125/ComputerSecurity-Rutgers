@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+
+import sys
+
+def main():
+    keyfile = sys.argv[1] # takes the keyfile from arguments
+    message = sys.argv[2] # takes the message from args
+    ciphertext = sys.argv[3] # takes the ciphertext file name from args
+
+    # open files
+    kf = open(keyfile, "rb") # open file in binary format         
+    msg = open(message, "rb")  # opens the file in binary format
+    cpt = open(ciphertext, "wb") # open with set to write file in binary format
+
+    plainTextList = []
+    keyList = []
+
+    msg_byte = msg.read(1)
+    while msg_byte:
+        plainTextList.append(msg_byte)
+        msg_byte = msg.read(1)
+
+    if kf:
+        kf_byte = kf.read(1)
+        while kf_byte:
+            keyList.append(kf_byte)
+            kf_byte = kf.read(1)
+
+        fileLength = len(keyList)
+    else:
+        keyList = [0]
+        fileLength = 0
+
+    i = 0
+    for byte in range(len(plainTextList)):
+        if keyList != [] and len(keyList) == i:
+            i = 0
+    
+        intCipher = (ord(plainTextList[byte]) + ord(keyList[i])) % 256
+        cpt.write(int.to_bytes(intCipher, byteorder=sys.byteorder, length=1))
+        i += 1
+
+    kf.close()
+    msg.close()
+    cpt.close()
+
+
+    print(f'keyfile={keyfile}, length={fileLength}')
+
+    
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,46 @@
+#!/usr/bin/python3
+
+import sys
+
+def lcg(seed):
+    return (1103515245 * seed + 12345) % 256
+
+
+def sdbm(string):
+    max_number = 18446744073709551615 + 1
+    hashValue = 0
+
+    for c in string:
+        i = ord(c)
+        hashValue = i + (hashValue << 6) + (hashValue << 16) - hashValue
+
+    return hashValue % max_number
+        
+
+def main():
+    if len(sys.argv) < 4:
+        print("Wrong number of argumetns")
+        sys.exit()
+
+    password = sys.argv[1]
+    plaintextfile = sys.argv[2]
+    ciphertextfile = sys.argv[3]
+
+    txtFile = open(plaintextfile, "rb")
+    outputFile = open(ciphertextfile, "wb")
+
+    seed = sdbm(password)
+    oSeed = seed
+    dataByte = txtFile.read(1)
+    while dataByte:
+        seed = lcg(seed)
+        output = seed ^ ord(dataByte)
+        outputFile.write(int.to_bytes(output, byteorder=sys.byteorder, length=1))
+        dataByte = txtFile.read(1)
+
+    print(f'using seed={oSeed} from passsword="{password}"')
+#    print(f'plaintextfile="{plaintextfile}" ciphertextfile="{ciphertextfile}" password="{password}"')
+
+
+if __name__ == "__main__":
+    main()

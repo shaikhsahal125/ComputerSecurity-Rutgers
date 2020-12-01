@@ -1,0 +1,167 @@
+#!/usr/bin/python3
+
+import sys
+import hashlib
+import time
+from itertools import permutations
+
+
+def get_available_hex(val):
+
+    if (val == '0'):
+        return 4
+
+    elif val == '1':
+        return 3
+
+    elif val == '2':
+        return 2
+
+    elif val == '3':
+        return 2
+
+    elif val == '4':
+        return 1
+
+    elif val == '5':
+        return 1
+
+    elif val == '6':
+        return 1
+
+    elif val == '7':
+        return 1
+
+    else:
+        return 0
+
+
+def getLeadingBits(new_hash):
+    ind = 0
+    zeroCount = 0
+
+    while new_hash[ind] == '0':
+        zeroCount += 1
+        ind += 1
+
+    b = get_available_hex(new_hash[ind])
+
+    return (zeroCount * 4) + b
+    
+
+def get_valid_prefix(initial_hash, nbits):
+    # old_hash = initial_hash
+    result = ["prefix", "itertions"]
+
+     # ascii chars to make possible prefix
+    all_prefix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~!#$%&()*+,-./0123456789:;<=>?@"
+
+    iterations = 0
+
+    leading_req = nbits//4
+    if (initial_hash[:leading_req] == "".join(['0'] * leading_req)) and get_available_hex(initial_hash[leading_req]) >= nbits % 4:
+        #                print("inside first")                                                                               
+        result = ["", iterations, initial_hash]
+        return result
+    
+    
+    for l in range(1, len(all_prefix)+1):
+        for i in range(len(all_prefix) - l + 1):
+            j = i + l - 1
+
+            if (iterations == 1000000000):
+                print("The program has reached 1billion itterations")
+                return
+            
+            base_string = ""
+            for k in range(i, j + 1):
+                base_string += all_prefix[k]
+
+
+            permutation_array = [''.join(c) for c in permutations(base_string)]
+
+            
+            for prefix in permutation_array:
+                # print(f"checking for {prefix}")
+                new_str = prefix + initial_hash
+                new_hash = hashlib.sha256(new_str.encode()).hexdigest()
+                binary_hash = bin(int(new_hash, 16))[2:]
+                # old_hash = new_hash
+                iterations += 1
+
+            
+                leading_req = nbits//4
+                if (new_hash[:leading_req] == "".join(['0'] * leading_req)) and get_available_hex(new_hash[leading_req]) >= nbits % 4:
+                    #                print("inside first")
+                    result = [prefix, iterations, new_hash]
+                    return result
+
+                                              
+            
+    print(iterations)
+    return
+
+
+def main():
+
+    # check for correct arguments
+    if (len(sys.argv) != 3):
+        print("Wrong number of arguments")
+        return
+
+    # take nbits arg from command line and check if its correct.
+    nbits = sys.argv[1]
+    try:
+        nbits = int(nbits)
+        if nbits < 0:
+            print("nbits must be a positive integer")
+            return
+    except:
+        print("nbits must be an integer")
+        return
+
+
+    # take file name and open the file
+    file_name = sys.argv[2]
+    f = open(file_name, "rb")
+    if not f:
+        print("The file is not able to open")
+        return
+
+    # Print the file name since its able to open successfully
+    print(f'File: {file_name}')
+
+    # reading the file
+    file_content = f.read()
+
+    # get initial-hash
+ #  file_content = "The grass is green"
+    initial_hash = hashlib.sha256(file_content).hexdigest()
+    old_hash = initial_hash
+
+    # print out initial hash value
+    print(f'Initial-hash: {initial_hash}')
+
+    # start time
+    start_time = time.time()
+    result = get_valid_prefix(initial_hash, nbits)
+    final_time = time.time() - start_time
+
+    if result == None:
+        print("Compute-time: {:.15f}".format(final_time))
+        return
+
+    new_hash = result[-1]
+    bits = getLeadingBits(new_hash)
+    
+    
+    # print remaining results
+    print(f'Proof-of-work: {result[0]}')
+    print(f'Hash: {result[-1]}')
+    print(f'Leading-bits: {bits}')
+    print(f'Iterations: {result[1]}')
+    print("Compute-time: {:.15f}".format(final_time))
+
+    
+if __name__ == '__main__':
+    main()

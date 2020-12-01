@@ -1,0 +1,166 @@
+#!/usr/bin/python3
+
+import sys
+
+
+def lcg(seed):
+    return (1103515245 * seed + 12345) % 256
+
+
+def sdbm(string):
+    max_number = 18446744073709551615 + 1
+    hashValue = 0
+
+    for c in string:
+        i = ord(c)
+        hashValue = i + (hashValue << 6) + (hashValue << 16) - hashValue
+
+    return hashValue % max_number
+
+
+def add_padding(block):
+    num = 16 - len(block)
+    return block + ([num] * num)
+
+
+
+def shuffle_bytes(block, key):
+    for i in range(len(block)):
+        first = key[i] & 15
+        second = (key[i] >> 4) & 15
+        block[first], block[second] = block[second], block[first]
+        
+
+def main():
+
+    if len(sys.argv) != 4:
+        print("wrong number of arguments")
+        sys.exit()
+    
+    password = sys.argv[1]
+    plaintextfile = sys.argv[2]
+    ciphertextfile = sys.argv[3]
+    
+    # open up files
+    plaintext = open(plaintextfile, "rb")
+    ciphertext = open(ciphertextfile, "wb")
+    
+    # getting seed
+    seed = sdbm(password)
+    oldSeed = seed # storing seed to print out at the end
+    
+    init_vector = []
+    keystream = []
+    first = True
+    
+    for _ in range(16):
+        seed = lcg(seed)
+        keystream.append((seed))
+                         
+    first_read = plaintext.read(16)
+
+    while first_read:
+        # check if it's the last one by calling read again
+        second_read = plaintext.read(16)
+        if not second_read:
+            if len(first_read) < 16:
+                # make init vect with padding
+                init_vector = []
+                paddedArray = add_padding(list(first_read))
+                if first:
+                    for i in range(16):
+                        init_vector.append(keystream[i] ^ paddedArray[i])
+                    first = False
+                else:
+                    for i in range(16):
+                        init_vector.append(cipherBlock[i] ^ paddedArray[i])
+                        
+                # keystream vector
+                keystream = []
+                for _ in range(16):
+                    seed = lcg(seed)
+                    keystream.append(seed)
+                
+                # add bit shuffling here
+                shuffle_bytes(init_vector, keystream)
+                
+                cipherBlock = [init_vector[i] ^ keystream[i] for i in range(16)]
+                
+                for data in cipherBlock:
+                    ciphertext.write(int.to_bytes(data, byteorder=sys.byteorder, length=1))
+                    
+            elif len(first_read) == 16:
+                init_vector = []
+                array = list(first_read)
+                if first:
+                    for i in range(16):
+                        init_vector.append(keystream[i] ^ array[i])
+                    first = False
+                else:
+                    for	i in range(16):
+                        init_vector.append(cipherBlock[i] ^ array[i])
+                        
+                # keystream vector                                                
+                keystream = []
+                for _ in range(16):
+                    seed = lcg(seed)
+                    keystream.append(seed)
+                
+                # add bit shuffling here                                            
+                shuffle_bytes(init_vector, keystream)
+                
+                cipherBlock = [init_vector[i] ^ keystream[i] for i in range(16)]
+                
+                for data in cipherBlock:
+                    ciphertext.write(int.to_bytes(data, byteorder=sys.byteorder, length=1))
+                
+                init_vector = []
+                paddedArray = add_padding([])
+                for i in range(16):
+                    init_vector.append(cipherBlock[i] ^ paddedArray[i])
+            
+                # keystream vector                                                  
+                keystream = []
+                for _ in range(16):
+                    seed = lcg(seed)
+                    keystream.append(seed)
+                    
+                # add bit shuffling here                                           
+                shuffle_bytes(init_vector, keystream)
+                
+                cipherBlock = [init_vector[i] ^ keystream[i] for i in range(16)]
+                
+                for data in cipherBlock:
+                    ciphertext.write(int.to_bytes(data, byteorder=sys.byteorder, length=1))
+        else:
+
+            init_vector = []
+            array = list(first_read)
+            if first:
+                for i in range(16):
+                    init_vector.append(keystream[i] ^ array[i])
+                first = False
+            else:
+                for i in range(16):
+                    init_vector.append(cipherBlock[i] ^ array[i])
+
+            keystream = []
+            for _ in range(16):
+                seed = lcg(seed)
+                keystream.append(seed)
+            
+            # add bit shuffling here                                            
+            shuffle_bytes(init_vector, keystream)
+            cipherBlock = [init_vector[i] ^ keystream[i] for i in range(16)]
+            
+            for data in cipherBlock:
+                ciphertext.write(int.to_bytes(data, byteorder=sys.byteorder, length=1))
+                
+                
+        first_read = second_read
+    print(f'using seed={oldSeed} from password="{password}"')
+    plaintext.close()
+    ciphertext.close()
+    
+if __name__ == "__main__":
+    main()

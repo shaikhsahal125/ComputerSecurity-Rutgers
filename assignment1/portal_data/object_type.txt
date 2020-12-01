@@ -1,0 +1,1 @@
+{"object-01": ["type-1", "type-2", "type-01"], "object-02": ["type-1", "type-2", "type-02"], "object-03": ["type-1", "type-2", "type-03"], "object-04": ["type-1", "type-2", "type-04"], "object-05": ["type-2", "type-05"], "object": [""]}

@@ -1,0 +1,53 @@
+#!/usr/bin/python3
+
+import sys
+
+
+def lckg(seed):
+    return (1103515245 * seed + 12345) % 256
+
+
+def sdbm(string):
+    max_num = 18446744073709551615 + 1
+    hash_value = 0
+    for i in string:
+        int_value = ord(i)
+        hash_value = int_value + (hash_value << 6) + (hash_value << 16) - hash_value
+
+    return hash_value % max_num
+
+
+def main():
+    if len(sys.argv) < 3:
+        print("wrong arguments")
+        sys.exit()
+
+    if len(sys.argv) == 3:
+        if sys.argv[1] == "-p":
+            password = sys.argv[2]
+            seed = sdbm(password)
+            print(f'using seed={seed} from password="{password}"')
+        elif sys.argv[1] == "-s":
+            print(f"using seed={sys.argv[2]}")
+
+
+    if len(sys.argv) == 5:
+        if sys.argv[1] == "-p" and sys.argv[3] == "-n":
+            password = sys.argv[2]
+            num = int(sys.argv[4])
+            seed = sdbm(password)
+            print(f'using seed={seed} from password="{password}"')
+            for _ in range(num):
+                seed = lckg(seed)
+                print(seed)
+        if sys.argv[1] == "-s" and sys.argv[3] == "-n":
+            seed = int(sys.argv[2])
+            num = int(sys.argv[4])
+            print(f"using seed={seed}")
+            for _ in range(num):
+                seed = lckg(seed)
+                print(seed)
+            
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,123 @@
+#!/usr/bin/python3
+
+import sys
+
+def lcg(seed):
+    return (1103515245 * seed + 12345) % 256
+
+
+def sdbm(string):
+    max_number = 18446744073709551615 + 1
+    hashValue = 0
+
+    for c in string:
+        i = ord(c)
+        hashValue = i + (hashValue << 6) + (hashValue << 16) - hashValue
+
+    return hashValue % max_number
+
+
+def remove_padding(block):
+    last = block[-1]
+    for pad in block[-last:]:
+        if pad != last:
+            return block
+    return block[:-last]
+
+
+def shuffle_bytes(block, key):
+    for i in range(len(block)-1, -1, -1):
+        first = key[i] & 15
+        second = (key[i] >> 4) & 15
+        block[first], block[second] = block[second], block[first]
+        
+
+# this is the new main method
+def main():
+
+    if len(sys.argv) != 4:
+        print("wrong arguments")
+        sys.exit()
+
+    password = sys.argv[1]
+    ciphertextfile = sys.argv[2]
+    plaintextfile = sys.argv[3]
+
+    # open files
+    ciphertext = open(ciphertextfile, "rb")
+    plaintext = open(plaintextfile, "wb")
+
+    # getting seed
+    seed = sdbm(password)
+    oldSeed = seed
+
+    initial_vec = []
+    first = True
+
+    # get keystream from generator
+    for _ in range(16):
+        seed = lcg(seed)
+        initial_vec.append(seed)
+
+
+    first_read = ciphertext.read(16)
+
+    while first_read:
+        second_read = ciphertext.read(16)
+        if not second_read:
+            byte16 = list(first_read)
+
+            keystream = []
+            for _ in range(16):
+                seed = lcg(seed)
+                keystream.append(seed)
+
+            ciphertext_block = [byte16[i] ^ keystream[i] for i in range(16)]
+
+            shuffle_bytes(ciphertext_block, keystream)
+            
+            plaintext_block = []
+            if first:
+                for i in range(16):
+                    plaintext_block.append(initial_vec[i] ^ ciphertext_block[i])
+                first = False
+            else:
+                for i in range(16):
+                    plaintext_block.append(temp[i] ^ ciphertext_block[i])
+
+            temp = byte16
+            final = remove_padding(plaintext_block)
+            for data in final:
+                plaintext.write(int.to_bytes(data, byteorder=sys.byteorder, length=1))
+        else:
+            # add stuff it not last block
+            byte16 = list(first_read)
+
+            keystream = []
+            for _ in range(16):
+                seed = lcg(seed)
+                keystream.append(seed)
+
+            ciphertext_block = [byte16[i] ^ keystream[i] for i in range(16)]
+
+            shuffle_bytes(ciphertext_block, keystream)
+
+            plaintext_block = []
+            if first:
+                for i in range(16):
+                    plaintext_block.append(initial_vec[i] ^ ciphertext_block[i])
+                first = False
+            else:
+                for i in range(16):
+                    plaintext_block.append(temp[i] ^ ciphertext_block[i])
+        
+            temp = byte16
+            for data in plaintext_block:
+                plaintext.write(int.to_bytes(data, byteorder=sys.byteorder, length=1))
+        first_read = second_read
+
+    print(f'using seed={oldSeed} from password="{password}"')
+    plaintext.close()
+    ciphertext.close()
+if __name__ == "__main__":
+    main()

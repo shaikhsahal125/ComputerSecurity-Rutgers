@@ -1,4 +1,6 @@
-Sahal Shaikh
+# Project 1
+
+## Sahal Shaikh
 
 
 
@@ -6,7 +8,7 @@ Sahal Shaikh
 I used python3 for this project
 
 #############
-How to run
+## How to run
 
 It can be run by
 
@@ -23,7 +25,7 @@ Some additional information
 
 
 ##################
-Example test scripts
+## Example test scripts
 
 -> i have used bash script to test the program.
 
@@ -111,15 +113,15 @@ Example test scripts
 
   check if user have access
 
-  	# Half Success and Half AccessDenied 
+  	## Half Success and Half AccessDenied 
   	for i in {1..300};do python3 portal.py CanAccess download user-$i music-$i.mp3;done
 
-	# Access denied 
+	## Access denied 
 	for i in {100..200};do python3 portal.py CanAccess view user-$i movie-$i.mp4;done
 
-	# Only first one Success and others Access Denied 
+	## Only first one Success and others Access Denied 
 	for i in {300..500};do python3 portal.py CanAccess view user-$i video-$i.mp4;done
 
-	# Success 
+	## Success 
 	for i in {200..300};do python3 portal.py CanAccess edit user-$i video-$i.mp4;done
 
